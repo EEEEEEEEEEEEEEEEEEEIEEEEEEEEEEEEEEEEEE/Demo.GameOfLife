@@ -1,9 +1,10 @@
-﻿#define USE_TRANSITION_TABLE
+﻿//#define USE_TRANSITION_TABLE
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace GameOfLife.Livies
 {
@@ -56,6 +57,26 @@ namespace GameOfLife.Livies
                 if (item != null) yield return item;
             }
             yield break;
+        }
+
+
+        //public IEnumerable<TimeSpan> GetIdleTime(int generation)
+        //{
+        //    for (int index = 0; index < generation; index++)
+        //    {
+        //        this.OnNextStateChange();
+        //        yield return TimeSpan.FromMilliseconds(950 + _rnd.Next(100));
+        //    }
+        //}
+
+        public void WholeLife(object state)
+        {
+            int generation = (int)state;
+            for (int index = 0; index < generation; index++)
+            {
+                this.OnNextStateChange();
+                Thread.Sleep(_rnd.Next(950, 1050));
+            }
         }
 
         public void OnNextStateChange()

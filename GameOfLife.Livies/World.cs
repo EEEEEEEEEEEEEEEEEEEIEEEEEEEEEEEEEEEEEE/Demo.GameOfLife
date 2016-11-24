@@ -82,7 +82,7 @@ namespace GameOfLife.Livies
             Console.Title = title;
             Console.SetWindowSize(this.SizeX * 2, this.SizeY);
             Console.SetCursorPosition(0, 0);
-            Console.Clear();
+            //Console.Clear();
 
             for (int y = 0; y < this.SizeY; y++)
             {
