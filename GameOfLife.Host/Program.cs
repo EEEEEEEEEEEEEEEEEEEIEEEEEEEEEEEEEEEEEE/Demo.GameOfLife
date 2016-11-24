@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Text;
 using GameOfLife.Livies;
 using System.Threading;
+using System.Xml;
+using System.IO;
 
 namespace GameOfLife.Host
 {
@@ -21,35 +23,18 @@ namespace GameOfLife.Host
             {
                 for (int y = 0; y < worldSizeY; y++)
                 {
-                    if (_rnd.Next(100) < 5) continue;
                     Cell item = new Cell();
                     realworld.PutOn(item, x, y);
-                    //break;
                 }
-                //break;
             }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
             Thread t2 = new Thread(RefreshScreen);
             t2.Start(realworld);
             Thread.Sleep(1000 * 10);
-            //realworld.RemoveOn(realworld.GetCell(5, 5), 5, 5);
             Thread.Sleep(1000 * 100);
             realworld.Dispose();
             realworld = null;
-            
             
             IsExit = true;
             t2.Join();

@@ -11,7 +11,7 @@ namespace GameOfLife.Livies
     {
         private int SizeX = 0;
         private int SizeY = 0;
-        private Cell[,] _map;
+        private Life[,] _map;
 
         private Thread _world_thread = null;
         private WorldTaskQueue _cq = new WorldTaskQueue();
@@ -20,7 +20,7 @@ namespace GameOfLife.Livies
 
         public World(int maxPosX, int maxPosY)
         {
-            this._map = new Cell[maxPosX, maxPosY];
+            this._map = new Life[maxPosX, maxPosY];
             this.SizeX = maxPosX;
             this.SizeY = maxPosY;
 
@@ -32,7 +32,7 @@ namespace GameOfLife.Livies
 
 
 
-        public void PutOn(Cell item, int posX, int posY)
+        public void PutOn(Life item, int posX, int posY)
         {
             if (this._map[posX, posY] == null)
             {
@@ -42,8 +42,8 @@ namespace GameOfLife.Livies
                 item.CurrentWorld = this;
 
                 //item.OnNextStateChangeEx();
-                //this._cq.AddCell(item);
-                this._cq.AddCell(item.GetNextWorldTask());
+                //this._cq.AddLife(item);
+                this._cq.AddLife(item.GetNextWorldTask());
             }
             else
             {
@@ -51,7 +51,7 @@ namespace GameOfLife.Livies
             }
         }
 
-        public void RemoveOn(Cell item, int posX, int posY)
+        public void RemoveOn(Life item, int posX, int posY)
         {
             if (this._map[posX, posY] != null && this._map[posX, posY] == item)
             {
@@ -64,7 +64,7 @@ namespace GameOfLife.Livies
             }
         }
 
-        public Cell GetCell(int posX, int posY)
+        public Life GetLife(int posX, int posY)
         {
             if (posX >= this.SizeX) return null;
             if (posY >= this.SizeY) return null;
@@ -86,7 +86,7 @@ namespace GameOfLife.Livies
 
         internal void AddWorldTask(WorldTask task)
         {
-            this._cq.AddCell(task);
+            this._cq.AddLife(task);
         }
 
 
@@ -101,7 +101,7 @@ namespace GameOfLife.Livies
             {
                 for (int x = 0; x < this.SizeX; x++)
                 {
-                    Cell item = this.GetCell(x, y);
+                    Life item = this.GetLife(x, y);
                     Console.SetCursorPosition(x * 2, y);
                     Console.Write((item == null) ? ("  ") : (item.DisplayText));
 
@@ -127,7 +127,7 @@ namespace GameOfLife.Livies
         {
             while(this._Disposed == false)
             {
-                WorldTask item = _cq.GetNextCell();
+                WorldTask item = _cq.GetNextLife();
                 TimeSpan idle = item.ExecuteTime - DateTime.Now;
                 if (idle > TimeSpan.Zero)
                 {
@@ -135,18 +135,18 @@ namespace GameOfLife.Livies
                     Thread.Sleep(idle);
                 }
                 ThreadPool.QueueUserWorkItem(item.ExecuteTask);
-                //ThreadPool.QueueUserWorkItem(RunCellNextStateChange, item);
+                //ThreadPool.QueueUserWorkItem(RunLifeNextStateChange, item);
             }
         }
 
         /*
-        private void RunCellNextStateChange(object state)
+        private void RunLifeNextStateChange(object state)
         {
-            Cell item = state as Cell;
+            Life item = state as Life;
             if (item.CurrentWorld == null) return;
 
             TimeSpan? ts = item.OnNextStateChangeEx();
-            if (this._Disposed == false && ts != null) _cq.AddCell(item);
+            if (this._Disposed == false && ts != null) _cq.AddLife(item);
         }
         */
 

@@ -6,113 +6,84 @@ using System.Threading;
 
 namespace GameOfLife.Livies
 {
-    public class Cell : IDisposable //: Life
+    public class Cell : Life //: Life
     {
-        private bool _Disposed = false;
-        public World CurrentWorld { get; internal set; }
-        public int PosX { get; internal set; }
-        public int PosY { get; internal set; }
-        private IEnumerator<TimeSpan> _enum = null;
+        public Cell()
+            : base()
+        {
+            this.IsAlive = //(_rnd.NextDouble() < InitAliveProbability);
+                this.InProbability(InitAliveProbability);
+        }
+
+        private bool InProbability(int percentage)
+        {
+            return (_rnd.Next(0, 100) <= percentage);
+        }
 
         private static Random _rnd = new Random();
 
-        public virtual string DisplayText
+        public override string DisplayText
         {
             get
             {
-                return this.IsAlive ? "●" : "○";
+                if (this.IsAlive == true) return "●";
+                else if (this.IsInfected == true) return "◎";
+                else return "○";
             }
         }
 
-        protected virtual IEnumerable<Cell> FindNeighbors()
+        protected override IEnumerable<Life> FindNeighbors()
         {
             if (this.CurrentWorld == null) yield break;
 
-            foreach (Cell item in new Cell[] {
-                this.CurrentWorld.GetCell(this.PosX -1, this.PosY-1),
-                this.CurrentWorld.GetCell(this.PosX, this.PosY-1),
-                this.CurrentWorld.GetCell(this.PosX+1, this.PosY-1),
-                this.CurrentWorld.GetCell(this.PosX-1, this.PosY),
-                this.CurrentWorld.GetCell(this.PosX+1, this.PosY),
-                this.CurrentWorld.GetCell(this.PosX-1, this.PosY+1),
-                this.CurrentWorld.GetCell(this.PosX, this.PosY+1),
-                this.CurrentWorld.GetCell(this.PosX+1, this.PosY+1)})
+            foreach (Life item in new Life[] {
+                this.CurrentWorld.GetLife(this.PosX -1, this.PosY-1),
+                this.CurrentWorld.GetLife(this.PosX, this.PosY-1),
+                this.CurrentWorld.GetLife(this.PosX+1, this.PosY-1),
+                this.CurrentWorld.GetLife(this.PosX-1, this.PosY),
+                this.CurrentWorld.GetLife(this.PosX+1, this.PosY),
+                this.CurrentWorld.GetLife(this.PosX-1, this.PosY+1),
+                this.CurrentWorld.GetLife(this.PosX, this.PosY+1),
+                this.CurrentWorld.GetLife(this.PosX+1, this.PosY+1)})
             {
                 if (item != null) yield return item;
             }
             yield break;
         }
-
-        internal WorldTask GetNextWorldTask()
-        {
-            if (this.CurrentWorld == null) return null;
-
-            if (this._enum.MoveNext() == true)
-            {
-                System.Diagnostics.Trace.WriteLine(string.Format("Cell({0},{1}): {2}", this.PosX, this.PosY, this._enum.Current));
-                return new WorldTask(
-                    DateTime.Now.Add(this._enum.Current),
-                    delegate()
-                    {
-                        WorldTask task = this.GetNextWorldTask();
-                        if (task != null) this.CurrentWorld.AddWorldTask(task);
-                    });
-            }
-            else
-            {
-                return null;
-            }
-        }
-        public void Dispose()
-        {
-            if (this._Disposed == false)
-            {
-                this._Disposed = true;
-                if (this.CurrentWorld != null)
-                {
-                    this.CurrentWorld.RemoveOn(this, this.PosX, this.PosY);
-                    this.CurrentWorld = null;
-                }
-                this.PosX = -1;
-                this.PosY = -1;
-            }
-        }
-
-
-        
-        
-        
-        
         
         
         private static bool?[,] _table = new bool?[2, 9] {
-        //  0       1      2      3      4      5      6      7      8
+            //  0       1      2      3      4      5      6      7      8
             {null,  null,  null,  true,  null,  null,  null,  null,  null},  // from dead state
             {false, false,  true,  true,  false, false, false, false, false}   // from alive state
         };
 
-        private const double InitAliveProbability = 0.2D;
+        //private const double InitAliveProbability = 0.2D;
+        private const int InitAliveProbability = 20;    // 20%
 
-        public Cell()
-        {
-            this._enum = this.WholeLifeEx().GetEnumerator();
-
-
-            this.IsAlive = (_rnd.NextDouble() < InitAliveProbability);
-        }
 
         public bool IsAlive { get; private set; }
 
-        protected virtual IEnumerable<TimeSpan> WholeLifeEx()
+        public bool IsInfected
+        {
+            get { return this.InfectedCount > 0; }
+        }
+        private int InfectedCount = 0;
+
+
+
+        protected override IEnumerable<TimeSpan> WholeLife()
         {
             yield return TimeSpan.FromMilliseconds(_rnd.Next(800, 1200));
 
             for (int index = 0; index < int.MaxValue; index++)
             {
                 int livesCount = 0;
+                int infectsCount = 0;
                 foreach (Cell item in this.FindNeighbors())
                 {
                     if (item.IsAlive == true) livesCount++;
+                    if (item.IsInfected == true) infectsCount++;
                 }
 
                 bool? value = _table[this.IsAlive ? 1 : 0, livesCount];
@@ -121,16 +92,18 @@ namespace GameOfLife.Livies
                     this.IsAlive = value.Value;
                 }
 
-
-
-                if (this.IsAlive == false && _rnd.NextDouble() < 0.1D)
+                if (this.IsInfected == true)
                 {
-                    break;
+                    this.InfectedCount--;
+                    if (this.InProbability(10) == true) this.IsAlive = false;
+                }
+                else
+                {
+                    if (this.InProbability(1 + infectsCount * 5) == true) this.InfectedCount = 3;
                 }
 
                 yield return TimeSpan.FromMilliseconds(_rnd.Next(800, 1200));
             }
-
 
             this.Dispose();
             yield break;
