@@ -13,8 +13,8 @@ namespace GameOfLife.Host
     {
         static void Main(string[] args)
         {
-            int worldSizeX = 30;
-            int worldSizeY = 30;
+            int worldSizeX = 40;
+            int worldSizeY = 40;
 
             World realworld = new World(worldSizeX, worldSizeY);
 
@@ -23,7 +23,13 @@ namespace GameOfLife.Host
             {
                 for (int y = 0; y < worldSizeY; y++)
                 {
-                    Cell item = new Cell();
+                    //Cell item = new Cell();
+                    Life item = null;
+
+                    if (_rnd.Next(100) < 3) item = new Tiger();
+                    else if (_rnd.Next(100) < 8) item = new Sheep();
+                    else item = new Grass();
+
                     realworld.PutOn(item, x, y);
                 }
             }

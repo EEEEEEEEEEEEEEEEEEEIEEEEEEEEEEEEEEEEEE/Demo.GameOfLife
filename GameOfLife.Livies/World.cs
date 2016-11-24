@@ -101,10 +101,11 @@ namespace GameOfLife.Livies
             {
                 for (int x = 0; x < this.SizeX; x++)
                 {
-                    Life item = this.GetLife(x, y);
-                    Console.SetCursorPosition(x * 2, y);
-                    Console.Write((item == null) ? ("  ") : (item.DisplayText));
+                    if (y == (this.SizeY - 1) && x == (this.SizeX - 1)) continue;
 
+                    Life item = this.GetLife(x, y);
+                    //Console.SetCursorPosition(x * 2, y);
+                    Console.Write((item == null) ? ("  ") : (item.DisplayText));
                 }
             }
         }
