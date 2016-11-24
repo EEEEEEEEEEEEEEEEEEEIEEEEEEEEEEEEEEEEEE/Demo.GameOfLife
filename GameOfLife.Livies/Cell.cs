@@ -1,6 +1,4 @@
-﻿//#define USE_TRANSITION_TABLE
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,44 +6,28 @@ using System.Threading;
 
 namespace GameOfLife.Livies
 {
-    public class Cell //: Life
+    public class Cell : IDisposable //: Life
     {
-#if USE_TRANSITION_TABLE
-        private static bool?[,] _table = new bool?[2, 9] {
-        //  0       1      2      3      4      5      6      7      8
-            {null,  null,  null,  true,  null,  null,  null,  null,  null},  // from dead state
-            {false, null,  true,  true,  false, false, false, false, false}   // from alive state
-        };
-#endif
-
-        protected World CurrentWorld { get; private set; }
-
+        private bool _Disposed = false;
+        public World CurrentWorld { get; internal set; }
         public int PosX { get; internal set; }
         public int PosY { get; internal set; }
+        private IEnumerator<TimeSpan> _enum = null;
 
-        private const double InitAliveProbability = 0.2D;
-
-
-        //public CellStateEnum State;
         private static Random _rnd = new Random();
-        public Cell(World world, int posX, int posY) //: base(world, posX, posY)
+
+        public virtual string DisplayText
         {
-            this.CurrentWorld = world;
-
-            // setup world
-            this.PosX = posY;
-            this.PosY = posY;
-            this.CurrentWorld.PutOn(this, posX, posY);
-
-            this.IsAlive = (_rnd.NextDouble() < InitAliveProbability);
-
-            this._enum = this.WholeLifeEx().GetEnumerator();
+            get
+            {
+                return this.IsAlive ? "●" : "○";
+            }
         }
 
-        public bool IsAlive { get; private set; }
-
-        protected IEnumerable<Cell> FindNeighbors()
+        protected virtual IEnumerable<Cell> FindNeighbors()
         {
+            if (this.CurrentWorld == null) yield break;
+
             foreach (Cell item in new Cell[] {
                 this.CurrentWorld.GetCell(this.PosX -1, this.PosY-1),
                 this.CurrentWorld.GetCell(this.PosX, this.PosY-1),
@@ -61,113 +43,97 @@ namespace GameOfLife.Livies
             yield break;
         }
 
-
-        public DateTime NextWakeUpTime { get; private set; }
-        private IEnumerator<TimeSpan> _enum = null;
-        public TimeSpan? OnNextStateChangeEx()
+        internal WorldTask GetNextWorldTask()
         {
+            if (this.CurrentWorld == null) return null;
+
             if (this._enum.MoveNext() == true)
             {
-                this.NextWakeUpTime = DateTime.Now.Add(this._enum.Current);
-                return this._enum.Current;
-            }
-            return null;
-        }
-        public IEnumerable<TimeSpan> WholeLifeEx()
-        {
-            for (int index = 0; index < int.MaxValue; index++)
-            {
-                this.OnNextStateChange();
-                yield return TimeSpan.FromMilliseconds(_rnd.Next(800, 1200));
-            }
-            yield break;
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        public void WholeLife(object state)
-        {
-            int generation = (int)state;
-            for (int index = 0; index < generation; index++)
-            {
-                this.OnNextStateChange();
-                Thread.Sleep(_rnd.Next(950, 1050));
-            }
-        }
-
-        public void OnNextStateChange()
-        {
-            int livesCount = 0;
-            foreach (Cell item in this.FindNeighbors())
-            {
-                if (item.IsAlive == true) livesCount++;
-            }
-
-#if USE_TRANSITION_TABLE
-            bool? value = _table[this.IsAlive ? 1 : 0, livesCount];
-            if (value.HasValue == true)
-            {
-                this.IsAlive = value.Value;
-            }
-#else
-
-            if (this.IsAlive == true && livesCount <1)
-            {
-                //孤單死亡：如果細胞的鄰居小於一個，則該細胞在下一次狀態將死亡。
-                this.IsAlive = false;
-            }
-            else if (this.IsAlive == true && livesCount >= 4)
-            {
-                //擁擠死亡：如果細胞的鄰居在四個以上，則該細胞在下一次狀態將死亡。
-                this.IsAlive = false;
-            }
-            else if (this.IsAlive == true && (livesCount == 2 || livesCount == 3))
-            {
-                //穩定：如果細胞的鄰居為二個或三個，則下一次狀態為穩定存活。
-                //this.IsAlive = true;
-            }
-            else if (this.IsAlive == false && livesCount == 3)
-            {
-                //復活：如果某位置原無細胞存活，而該位置的鄰居為三個，則該位置將復活一細胞。
-                this.IsAlive = true;
+                System.Diagnostics.Trace.WriteLine(string.Format("Cell({0},{1}): {2}", this.PosX, this.PosY, this._enum.Current));
+                return new WorldTask(
+                    DateTime.Now.Add(this._enum.Current),
+                    delegate()
+                    {
+                        WorldTask task = this.GetNextWorldTask();
+                        if (task != null) this.CurrentWorld.AddWorldTask(task);
+                    });
             }
             else
             {
-                // ToDo: 未定義的狀態? assert
+                return null;
             }
-#endif
-        
+        }
+        public void Dispose()
+        {
+            if (this._Disposed == false)
+            {
+                this._Disposed = true;
+                if (this.CurrentWorld != null)
+                {
+                    this.CurrentWorld.RemoveOn(this, this.PosX, this.PosY);
+                    this.CurrentWorld = null;
+                }
+                this.PosX = -1;
+                this.PosY = -1;
+            }
         }
 
 
+        
+        
+        
+        
+        
+        
+        private static bool?[,] _table = new bool?[2, 9] {
+        //  0       1      2      3      4      5      6      7      8
+            {null,  null,  null,  true,  null,  null,  null,  null,  null},  // from dead state
+            {false, false,  true,  true,  false, false, false, false, false}   // from alive state
+        };
+
+        private const double InitAliveProbability = 0.2D;
+
+        public Cell()
+        {
+            this._enum = this.WholeLifeEx().GetEnumerator();
 
 
-        //public enum CellStateEnum
-        //{
-        //    DEATH_WITH_LONELY,
-        //    DEATH_WITH_CROWDED,
-        //    STABLE,
-        //    REVERT
-        //}
+            this.IsAlive = (_rnd.NextDouble() < InitAliveProbability);
+        }
+
+        public bool IsAlive { get; private set; }
+
+        protected virtual IEnumerable<TimeSpan> WholeLifeEx()
+        {
+            yield return TimeSpan.FromMilliseconds(_rnd.Next(800, 1200));
+
+            for (int index = 0; index < int.MaxValue; index++)
+            {
+                int livesCount = 0;
+                foreach (Cell item in this.FindNeighbors())
+                {
+                    if (item.IsAlive == true) livesCount++;
+                }
+
+                bool? value = _table[this.IsAlive ? 1 : 0, livesCount];
+                if (value.HasValue == true)
+                {
+                    this.IsAlive = value.Value;
+                }
+
+
+
+                if (this.IsAlive == false && _rnd.NextDouble() < 0.1D)
+                {
+                    break;
+                }
+
+                yield return TimeSpan.FromMilliseconds(_rnd.Next(800, 1200));
+            }
+
+
+            this.Dispose();
+            yield break;
+        }
     }
 }

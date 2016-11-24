@@ -48,9 +48,9 @@
     <Compile Include="Cell.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="World.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="GoL1.cd" />
+    <Compile Include="WorldTask.cs" />
+    <Compile Include="WorldTaskComparer.cs" />
+    <Compile Include="WorldTaskQueue.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
