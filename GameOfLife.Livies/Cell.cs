@@ -20,8 +20,8 @@ namespace GameOfLife.Livies
 
         protected World CurrentWorld { get; private set; }
 
-        internal int PosX = 0;
-        internal int PosY = 0;
+        public int PosX { get; internal set; }
+        public int PosY { get; internal set; }
 
         private const double InitAliveProbability = 0.2D;
 
@@ -38,6 +38,8 @@ namespace GameOfLife.Livies
             this.CurrentWorld.PutOn(this, posX, posY);
 
             this.IsAlive = (_rnd.NextDouble() < InitAliveProbability);
+
+            this._enum = this.WholeLifeEx().GetEnumerator();
         }
 
         public bool IsAlive { get; private set; }
@@ -60,14 +62,48 @@ namespace GameOfLife.Livies
         }
 
 
-        //public IEnumerable<TimeSpan> GetIdleTime(int generation)
-        //{
-        //    for (int index = 0; index < generation; index++)
-        //    {
-        //        this.OnNextStateChange();
-        //        yield return TimeSpan.FromMilliseconds(950 + _rnd.Next(100));
-        //    }
-        //}
+        public DateTime NextWakeUpTime { get; private set; }
+        private IEnumerator<TimeSpan> _enum = null;
+        public TimeSpan? OnNextStateChangeEx()
+        {
+            if (this._enum.MoveNext() == true)
+            {
+                this.NextWakeUpTime = DateTime.Now.Add(this._enum.Current);
+                return this._enum.Current;
+            }
+            return null;
+        }
+        public IEnumerable<TimeSpan> WholeLifeEx()
+        {
+            for (int index = 0; index < int.MaxValue; index++)
+            {
+                this.OnNextStateChange();
+                yield return TimeSpan.FromMilliseconds(_rnd.Next(800, 1200));
+            }
+            yield break;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         public void WholeLife(object state)
         {
