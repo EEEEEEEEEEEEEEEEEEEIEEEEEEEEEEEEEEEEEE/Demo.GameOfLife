@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfLife.Livies", "GameOfLife.Livies\GameOfLife.Livies.csproj", "{F384DB0C-FE9C-436D-BDC9-5D5E0C37E05B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfLife.Host", "GameOfLife.Host\GameOfLife.Host.csproj", "{E7C3538A-3AB2-4BD0-93FE-F21E9A82F05C}"
